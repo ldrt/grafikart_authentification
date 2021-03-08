@@ -1,11 +1,14 @@
 <?php
-$pdo = new PDO("sqlite:../data.sqlite", null, null, [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-]);
+require '../vendor/autoload.php';
+use App\App;
+
+$pdo = App::getPDO();
 $users = $pdo->query('SELECT * FROM users')->fetchAll();
-?><!DOCTYPE html>
-<html lang="en">
+$user = App::getAuth()->user();
+?>
+
+<!DOCTYPE html>
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +18,17 @@ $users = $pdo->query('SELECT * FROM users')->fetchAll();
 </head>
 <body class="p-4">
     <h1>Accèder aux pages</h1>
+
+    <?php if(isset($_GET['login'])) : ?>
+    <div class="alert alert-success">Vous êtes bien identifié</div>
+    <?php endif ?>
+
+    <?php if($user ) : ?>
+    <p>
+        Vous êtes connecté en tant que <?= $user->username ?> - 
+        <a href="logout.php">Se déconnecter</a>
+    </p>
+    <?php endif ?>
 
     <ul>
         <li><a href="admin.php">Page réservée à l'administrateur</a></li>
