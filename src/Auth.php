@@ -1,15 +1,19 @@
 <?php
 namespace App;
+
+use App\Exception\ForbiddenException;
 use PDO;
 
 class Auth {
     private $pdo;
     private $loginPath;
+    private $session;
 
-    public function __construct(PDO $pdo, string $loginPath)
+    public function __construct(PDO $pdo, string $loginPath, array &$session)
     {
         $this->pdo = $pdo;
         $this->loginPath = $loginPath;
+        $this->session = &$session; //&$array = reference to $array
     }
 
     public function login(string $username, string $password) : ?User
@@ -21,10 +25,7 @@ class Auth {
             return null;
         }
         if (password_verify($password, $user->password)) {
-            if(session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            $_SESSION['auth'] = $user->id;
+            $this->session['auth'] = $user->id;
             return $user;
         }
         return null;
@@ -32,10 +33,7 @@ class Auth {
 
     public function user() : ?User
     {
-        if(session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $id = $_SESSION['auth'] ?? null;
+        $id = $this->session['auth'] ?? null;
         if ($id === null) {
             return null;
         }
@@ -49,9 +47,13 @@ class Auth {
     public function requireRole(string ...$roles) : void
     {
         $user = $this->user();
-        if($user === null || !in_array($user->role, $roles)) {
-            header("Location: {$this->loginPath}?forbid=1");
-            exit();
+        if($user === null) {
+            throw new ForbiddenException("Vous devez être connecté pour votre cette page");
+        }
+        if (!in_array($user->role, $roles)) {
+            $roles = implode(',', $roles);
+            $role = $user->role;
+            throw new ForbiddenException("Vous avez pas le rôle nécessaire ($role != $roles) pour accéder à la page");
         }
     }
 }

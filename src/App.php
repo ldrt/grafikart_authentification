@@ -19,8 +19,11 @@ class App {
 
     public static function getAuth() : Auth 
     {
+        if(session_status() === PHP_SESSION_NONE){
+            session_start();
+        }
         if(!self::$auth) {
-            self::$auth = new Auth(self::getPDO(), '/login.php');
+            self::$auth = new Auth(self::getPDO(), '/login.php', $_SESSION);
         }
         return self::$auth;
     }
